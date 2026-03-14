@@ -138,10 +138,10 @@
                 <div class="pile" id="waste"></div>
             </div>
             <div class="foundations">
-                <div class="pile foundation" data-suit="♠"></div>
-                <div class="pile foundation" data-suit="♥"></div>
-                <div class="pile foundation" data-suit="♣"></div>
-                <div class="pile foundation" data-suit="♦"></div>
+                <div class="pile foundation" id="foundation-0" data-suit="♠"></div>
+                <div class="pile foundation" id="foundation-1" data-suit="♥"></div>
+                <div class="pile foundation" id="foundation-2" data-suit="♣"></div>
+                <div class="pile foundation" id="foundation-3" data-suit="♦"></div>
             </div>
         </div>
         <div class="tableau">
@@ -217,8 +217,8 @@
         function render() {
             renderPile('stock', stock, false);
             renderPile('waste', waste, false);
-            foundations.forEach((pile, i) => renderPile(`foundations-${i}`, pile, true));
-            tableau.forEach((pile, i) => renderPile(`tableau-${i}`, pile, false, i));
+            foundations.forEach((pile, i) => renderPile('foundation-' + i, pile, true));
+            tableau.forEach((pile, i) => renderPile('tableau-' + i, pile, false, i));
             checkWin();
         }
 
@@ -258,8 +258,26 @@
         function setupDrag(cardEl, pile, pileEl, tableauIndex, cardIndex) {
             const card = pile[cardIndex];
 
-            cardEl.addEventListener('mousedown', (e) => startDrag(e, card, pile, pileEl, tableauIndex, cardIndex));
-            cardEl.addEventListener('touchstart', (e) => startDrag(e, card, pile, pileEl, tableauIndex, cardIndex), { passive: false });
+            cardEl.onclick = () => {
+                if (dragSource && dragSource.type === 'tableau') {
+                    const pileElEl = document.getElementById('tableau-' + dragSource.index);
+                    dragSource = { type: 'tableau', index: dragSource.index, cardIndex };
+                    draggedCards = pile.slice(cardIndex);
+                    pile.forEach((c, i) => {
+                        if (i >= cardIndex && pileElEl.children[i]) {
+                            pileElEl.children[i].classList.add('dragging');
+                        }
+                    });
+                    document.addEventListener('mousemove', drag, { passive: false });
+                    document.addEventListener('mouseup', endDrag);
+                    document.addEventListener('touchmove', drag, { passive: false });
+                    document.addEventListener('touchend', endDrag);
+                }
+            };
+            cardEl.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                setupDrag(cardEl, pile, pileEl, tableauIndex, cardIndex);
+            }, { passive: false });
         }
 
         function startDrag(e, card, pile, pileEl, tableauIndex, cardIndex) {
